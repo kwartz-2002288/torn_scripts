@@ -4,7 +4,7 @@ from jpr_lib import load_config, safe_get
 import gspread, re
 from datetime import datetime, timezone
 
-DEBUG = False
+DEBUG = True
 
 def extract_destination(description):
     desc = description.strip()
@@ -150,14 +150,14 @@ def write_to_sheet(gc, spreadsheet_id, sheet_name, computer_name, filtered):
 def main():
     config = load_config()
     torn_key = config["torn_keys"]["Kwartz"]
-    data_path = config["data_path"]
-    json_keyfile = data_path + config["sheet_keys"]["torn_project_json"]
+    data_path_abroad = config["data_path"] + "abroad/"
+    json_keyfile = config["data_path"] + config["sheet_keys"]["torn_project_json"]
     spreadsheet_id = config["sheet_keys"]["abroad_targets"]
     computer_name = config.get("computer", "unknown")
 
     gc = gspread.service_account(filename=json_keyfile)
 
-    with open(data_path + "factions_abroad.json", 'r') as f:
+    with open(data_path_abroad + "factions_abroad.json", 'r') as f:
         faction_list = json.load(f)
 
     for faction_id in faction_list:
@@ -169,7 +169,7 @@ def main():
         members = data.get("members", {})
         tag = data.get("tag", f"faction_{faction_id}")
 
-        state_path = os.path.join(data_path, f"abroad_state_{faction_id}.json")
+        state_path = os.path.join(data_path_abroad, f"abroad_state_{faction_id}.json")
 
         filtered = filter_members(members, state_path)
         write_to_sheet(gc, spreadsheet_id, tag, computer_name, filtered)
