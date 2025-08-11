@@ -1,5 +1,7 @@
 # macOS
 .DS_Store
+.Spotlight-V100
+.Trashes
 
 # PyCharm / JetBrains
 .idea/
@@ -7,6 +9,7 @@
 
 # Python cache & build
 __pycache__/
+.pytest_cache/
 *.py[cod]
 *.so
 *.egg
@@ -17,7 +20,7 @@ build/
 # Virtual environments
 venv/
 env/
-.jpr_env/
+jpr_env/
 
 # Logs
 *.log
