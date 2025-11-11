@@ -1,7 +1,7 @@
 from datetime import datetime, timezone
 from jpr_lib import load_config, send_sms, safe_get
 
-DEBUG = True
+DEBUG = False
 
 # set_up
 config = load_config()
@@ -13,6 +13,7 @@ computer = config["computer"]
 now_date = datetime.now(timezone.utc)
 now_date_str = now_date.strftime("%d/%m/%Y %H:%M:%S UTC")
 
+# get properties information
 properties_info = safe_get(
     f"https://api.torn.com/v2/user/properties?filters=ownedByUser"
     f"&offset=0&limit=20&key={torn_key}"
@@ -31,7 +32,7 @@ sms_message = (
 
 for property_info in properties_info:
 
-    if property_info["property"]["name"] == "Private Island": # select PI
+    if property_info["property"]["name"] == "Private Island": # select PI only
 
         if property_info["status"] == "rented": # PI is rented
             days_left = property_info["rental_period_remaining"]
