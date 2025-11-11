@@ -13,15 +13,10 @@ computer = config["computer"]
 now_date = datetime.now(timezone.utc)
 now_date_str = now_date.strftime("%d/%m/%Y %H:%M:%S UTC")
 
-# get data from torn API
-# properties_info = safe_get(
-#     f"https://api.torn.com/user/?selections=properties&key={torn_key}"
-#     )["properties"]
 properties_info = safe_get(
     f"https://api.torn.com/v2/user/properties?filters=ownedByUser"
     f"&offset=0&limit=20&key={torn_key}"
     )["properties"]
-#raise SystemExit("Manual stop.")
 
 # property alert limit
 days_alert_limit = 4

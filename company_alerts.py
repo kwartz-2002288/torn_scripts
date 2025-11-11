@@ -93,7 +93,7 @@ if not good_activity:
     sms_message += activity_message
 
 if all_good and good_activity:
-    sms_message += "All good"
+    sms_message += "All is good"
 
 sms_status = send_sms(message = sms_message, api_keys = free_keys)
 
