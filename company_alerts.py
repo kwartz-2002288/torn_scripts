@@ -9,16 +9,16 @@ torn_key = config["torn_keys"]["Kwartz"]
 free_keys = config["free_keys"]
 computer = config["computer"]
 
+# script execution start schedule
+now_date = datetime.now(timezone.utc)
+now_date_str = now_date.strftime("%Y/%m/%d %H:%M:%S UTC")
+
 # get data from torn API
 company_employees = safe_get(f"https://api.torn.com/company/?selections=employees&key={torn_key}")[
     "company_employees"]
 company_detailed = safe_get(f"https://api.torn.com/company/?selections=detailed&key={torn_key}")[
     "company_detailed"]
 company = safe_get(f"https://api.torn.com/company/?selections=profile&key={torn_key}")["company"]
-
-# script execution start schedule
-now_date = datetime.now(timezone.utc)
-now_date_str = now_date.strftime("%Y/%m/%d %H:%M:%S UTC")
 
 # company alerts limits
 trains_alert_limit = 10

@@ -1,66 +1,62 @@
-import requests, string
-from datetime import time, datetime, timezone, timedelta
-import jpr_lib
+from datetime import datetime, timezone
+from jpr_lib import load_config, send_sms, safe_get
 
-# days before lease end
-days_alert_limit = 4
+DEBUG = True
+
+# set_up
+config = load_config()
+torn_key = config["torn_keys"]["Kwartz"]
+free_keys = config["free_keys"]
+computer = config["computer"]
 
 # script execution start schedule
 now_date = datetime.now(timezone.utc)
-current_date_str = now_date.strftime("%d/%m/%Y %H:%M:%S")
+now_date_str = now_date.strftime("%d/%m/%Y %H:%M:%S UTC")
 
-# Set_up
-# set_up
-config = load_keys()
-api_keys = config["api_keys"]
-api_key = api_keys["Kwartz"]
+# get data from torn API
+# properties_info = safe_get(
+#     f"https://api.torn.com/user/?selections=properties&key={torn_key}"
+#     )["properties"]
+properties_info = safe_get(
+    f"https://api.torn.com/v2/user/properties?filters=ownedByUser"
+    f"&offset=0&limit=20&key={torn_key}"
+    )["properties"]
+#raise SystemExit("Manual stop.")
 
-# Free mobile API user's informations and error codes
-Free_user = APIKey_dict["Free_user"]
-Free_APIKEY = APIKey_dict["Free_APIKEY"] # API key for free mobile SMS
-Free_errors = {
-    200: "SMS sent successfully.",
-    400: "Missing parameter. One or more required parameters were not provided.",
-    402: "Too many SMS sent in a short period. SMS sending is temporarily blocked.",
-    403: "Incorrect credentials. The provided user ID/API key pair is invalid.",
-    500: "Server error. A problem occurred on Free Mobile's server."
-}
-
-def send_SMS(message):
-    url = f"https://smsapi.free-mobile.fr/sendmsg?user={Free_user}&pass={Free_APIKEY}&msg={message}"
-    response = requests.get(url)
-    check = Free_errors.get(response.status_code, "Unknown error")
-    return check
-
-def get_properties_info():
-    properties_info = requests.get(f"https://api.torn.com/user/?selections=properties&key={APIKEY}").json()["properties"]
-    return properties_info
-
-properties_info = get_properties_info()
-
-message = f"{current_date_str} UTC\nAlert from Torn properties\n"
-
-activity_message = ""
-all_good = True
+# property alert limit
+days_alert_limit = 4
 not_rented = 0
 
-for property_id, property in properties_info.items():
-    if property["status"] == "Owned by them" and property["property"] == "Private Island":
+# Prepare the message
+all_good = True
+sms_message = (
+    f"ALERT from Torn Properties\n"
+    f"report by {computer}\n"
+)
 
-        if property["rented"] is not None: # PI is rented
-            days_left = property["rented"]["days_left"]
+for property_info in properties_info:
+
+    if property_info["property"]["name"] == "Private Island": # select PI
+
+        if property_info["status"] == "rented": # PI is rented
+            days_left = property_info["rental_period_remaining"]
             if days_left < days_alert_limit:
                 all_good = False
-                message += f"PI lease ending in {days_left} days\n"
+                tenant = property_info["used_by"][0]["name"]
+                sms_message += f"PI lease ending in {days_left} days\n"
+                sms_message += f"tenant: {tenant}\n"
         else: # PI is not rented
             all_good = False
             not_rented += 1
 
 if all_good:
-    message += "All good!"
+    sms_message += "All good!"
 else:
     if not_rented > 0:
-        message += f"{not_rented} PI not rented\n"
-    check = send_SMS(message)
-    print(message)
-    print(f"SMS sending report: {check}")
+        sms_message += f"{not_rented} PI not rented\n"
+
+sms_status = send_sms(message = sms_message, api_keys = free_keys)
+
+if DEBUG:
+    print(sms_message)
+    print(f"SMS sending report: {sms_status}")
