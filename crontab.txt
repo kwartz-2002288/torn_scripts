@@ -1,0 +1,42 @@
+# Argument 1: Minute (0 - 59)
+# Argument 2: Hour (0 - 23)
+# Argument 3: Day of Month (1 - 31)
+# Argument 4: Month (1-12)
+# Argument 5: Day of Week (0 - 6) Sunday = 0
+# Argument 6: Command
+# You can specify intervals 0-4, lists 12,16,19
+# or interval,step 0-12/2 (equivalent to list 0,2,4,6,8,10,12).
+# Exemples :
+# 30 2 * * *        # every day at 2H30
+# 45 3 1 * *        # every first day of a month at 3H45
+# 13 0-23/2 * * *   # 13 minutes after 0am, 2am, 4am ..., everyday"
+# 0 3 * * 0         # every week at 3h00
+# 0,15,30,45 * * * * echo "hello tous les quarts d heure"
+# */5 * * * *       # every 5 minutes
+
+
+# Spreadsheet scripts
+57 03  * * * ~/torn_scripts/run_torn_script.sh crimes2.py
+25 19  * * * ~/torn_scripts/run_torn_script.sh TV_network.py
+# */5 * * * * ~/torn_scripts/run_torn_script.sh targets_abroad.py
+
+# TO DO !!!
+# TornStatsUpdater.py
+# TornRehabUpdater.py
+# TornNetworthUpdater.py
+# TornGymUpdater.py
+
+
+
+# SMS alerts scripts
+2-59/3 * * * * ~/torn_scripts/run_torn_script.sh shop_surveillance_alert.py
+41 12  * * * ~/torn_scripts/run_torn_script.sh company_alerts.py
+40 18  * * * ~/torn_scripts/run_torn_script.sh company_alerts.py
+12 12  * * * ~/torn_scripts/run_torn_script.sh company_alerts.py
+03 09  * * * bash -c "source $FPYTHON/activate && python $FTORN/pi_alerts.py"
+12 18  * * * bash -c "source $FPYTHON/activate && python $FTORN/bg_alerts.py"
+
+
+
+
+
