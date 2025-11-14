@@ -2,7 +2,7 @@ from jpr_lib import load_config, safe_get, python_date_to_excel_number
 import gspread
 from datetime import datetime, timezone
 
-DEBUG = False
+DEBUG = True
 
 # Constants
 DIRECTOR_WAGE = 4_000_000
@@ -25,12 +25,12 @@ def get_config():
     Load and extract configuration values needed for the script.
     """
     config = load_config()
-    torn_key = config["torn_keys"]["Kwartz"]
+    torn_keys = config["torn_keys"]
     data_path = config["data_path"]
     json_keyfile = data_path + config["sheet_keys"]["torn_project_json"]
     spreadsheet_id = config["sheet_keys"]["NubTV"]
     computer_name = config.get("computer", "unknown")
-    return torn_key, json_keyfile, spreadsheet_id, computer_name
+    return torn_keys, json_keyfile, spreadsheet_id, computer_name
 
 
 def fetch_company_data(torn_key: str):
@@ -42,13 +42,6 @@ def fetch_company_data(torn_key: str):
     company_detailed = safe_get(base_url + "detailed")["company_detailed"]
     company_profile = safe_get(base_url + "profile")["company"]
     return company_employees, company_detailed, company_profile
-
-
-def setup_gspread(json_keyfile: str):
-    """
-    Authenticate and return gspread client using a JSON keyfile.
-    """
-    return gspread.service_account(filename=json_keyfile)
 
 
 def parse_employees(company_employees: dict, now_date: datetime):
@@ -147,7 +140,7 @@ def update_employees_sheet(gc, spreadsheet_id: str, employees: list):
     ws = gc.open_by_key(spreadsheet_id).worksheet('employees_raw')
     ws.clear()
     ws.update(range_name="A1:Z51", values=employees)
-    log("Employees data updated")
+    log("Employees data sheet updated")
 
 
 def update_wages_sheet(gc, spreadsheet_id: str, computer_name: str, current_date_str: str):
@@ -223,11 +216,13 @@ def update_evolution_sheet(
 
 
 def main():
-    torn_key, json_keyfile, spreadsheet_id, computer_name = get_config()
 
-    gc = setup_gspread(json_keyfile)
+    torn_keys, json_keyfile, spreadsheet_id, computer_name = get_config()
+    torn_key = torn_keys["Kwartz"]
+    gc = gspread.service_account(json_keyfile)
 
-    company_employees, company_detailed, company_profile = fetch_company_data(torn_key)
+    company_employees, company_detailed, company_profile = (
+        fetch_company_data(torn_key))
 
     now_date = datetime.now(timezone.utc)
     current_date_str = now_date.strftime("%d/%m/%Y %H:%M:%S")

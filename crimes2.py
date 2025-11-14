@@ -2,7 +2,15 @@ from jpr_lib import load_config, safe_get, python_date_to_excel_number
 import gspread
 from datetime import datetime, timezone
 
-DEBUG = True
+DEBUG = False
+
+def log(msg: str):
+    """
+    Print debug messages if DEBUG is enabled.
+    """
+    if DEBUG:
+        print(msg)
+
 
 def parse_crimes(skill_data, criminal_record, current_date_num):
 
@@ -25,7 +33,7 @@ def parse_crimes(skill_data, criminal_record, current_date_num):
     # build header and data
     crimes2_header = ["date"] + skill_keys + crime_keys
     crimes2_data = [current_date_num] + skills + crimes
-
+    log(f"parse_crimes done")
     return crimes2_data, crimes2_header
 
 
@@ -36,7 +44,8 @@ def write_to_sheet(gc, spreadsheet_id, sheet_name, computer_name, crimes2_data, 
     old_total = int(old_total.replace(",", "").replace(" ", ""))
     crime_total = crimes2_data[-1]
     #print(old_total, crime_total)
-    # if old_total > 0 :
+    if DEBUG:
+        old_total = crime_total - 1
     if old_total < crime_total:
         ws.update_cell(1, 1, "Updated by " + computer_name)
         # update header
@@ -47,6 +56,7 @@ def write_to_sheet(gc, spreadsheet_id, sheet_name, computer_name, crimes2_data, 
         current_row = 1 + int(''.join(current_row.split())) #clean string and convert to int
         zone_to_be_filled = "A" + str(current_row) + ":Z" + str(current_row)
         ws.update(range_name=zone_to_be_filled, values=[crimes2_data])
+    log(f"write_to_sheet done")
 
 def main():
     config = load_config()
@@ -60,13 +70,14 @@ def main():
     current_date_num = python_date_to_excel_number(date_now)
 
     for player_name in ('Kwartz','Kivou'):
-
+        log(f"Updating {player_name} crimes")
         torn_key = config["torn_keys"][player_name]
-        skill_data = safe_get(f"https://api.torn.com/user/?selections=skills&key={torn_key}")
+        skill_data = safe_get(f"https://api.torn.com/user/?"
+                              f"selections=skills&key={torn_key}")
         criminal_record = safe_get(f"https://api.torn.com/user/?selections=crimes&key={torn_key}")["criminalrecord"]
         crimes2_data, crimes2_header = parse_crimes(skill_data, criminal_record, current_date_num)
         sheet_name = "Crimes2" + player_name
         write_to_sheet(gc, spreadsheet_id, sheet_name, computer_name, crimes2_data, crimes2_header)
-
+        log(f"{player_name} crimes updated")
 if __name__ == "__main__":
     main()

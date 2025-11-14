@@ -16,25 +16,23 @@
 
 
 # Spreadsheet scripts
+47 03  * * * ~/torn_scripts/run_torn_script.sh gym_updater.py
 57 03  * * * ~/torn_scripts/run_torn_script.sh crimes2.py
-25 19  * * * ~/torn_scripts/run_torn_script.sh TV_network.py
+25 19  * * * ~/torn_scripts/run_torn_script.sh tv_network.py
 # */5 * * * * ~/torn_scripts/run_torn_script.sh targets_abroad.py
 
 # TO DO !!!
 # TornStatsUpdater.py
 # TornRehabUpdater.py
 # TornNetworthUpdater.py
-# TornGymUpdater.py
-
-
 
 # SMS alerts scripts
 2-59/3 * * * * ~/torn_scripts/run_torn_script.sh shop_surveillance_alert.py
 41 12  * * * ~/torn_scripts/run_torn_script.sh company_alerts.py
 40 18  * * * ~/torn_scripts/run_torn_script.sh company_alerts.py
 12 12  * * * ~/torn_scripts/run_torn_script.sh company_alerts.py
-03 09  * * * bash -c "source $FPYTHON/activate && python $FTORN/pi_alerts.py"
-12 18  * * * bash -c "source $FPYTHON/activate && python $FTORN/bg_alerts.py"
+03 09  * * * ~/torn_scripts/run_torn_script.sh pi_alerts.py
+12 18  * * * ~/torn_scripts/run_torn_script.sh bg_alerts.py
 
 
 
