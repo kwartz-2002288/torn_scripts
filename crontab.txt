@@ -17,8 +17,8 @@
 
 # Spreadsheet scripts
 47 03  * * * ~/torn_scripts/run_torn_script.sh gym_updater.py
-57 03  * * * ~/torn_scripts/run_torn_script.sh crimes2.py
-25 19  * * * ~/torn_scripts/run_torn_script.sh tv_network.py
+37 03  * * * ~/torn_scripts/run_torn_script.sh crimes2.py
+19 22  * * * ~/torn_scripts/run_torn_script.sh tv_network.py
 # */5 * * * * ~/torn_scripts/run_torn_script.sh targets_abroad.py
 
 # TO DO !!!

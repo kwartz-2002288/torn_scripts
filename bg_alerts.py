@@ -1,7 +1,7 @@
 from datetime import datetime, timezone
 from jpr_lib import load_config, send_sms, safe_get
 
-DEBUG = False
+DEBUG = True
 
 # set_up
 config = load_config()
@@ -28,11 +28,11 @@ if DEBUG:
 all_good = True
 sms_message = (
     f"ALERT from Nikeh Shop\n"
-    f"report by {computer}\n"
 )
 if id_Boxing_Gloves in Nikeh_shop_inventory:
     N_items = Nikeh_shop_inventory[id_Boxing_Gloves]["in_stock"]
-    sms_message += f"{N_items} boxing gloves here!"
+    sms_message += f"{N_items} boxing gloves here!\n"
+    sms_message += f"report by {computer}\n"
 
     if DEBUG:
         print(sms_message)

@@ -1,7 +1,7 @@
 from datetime import datetime, timezone
 from jpr_lib import load_config, send_sms, safe_get
 
-DEBUG = False
+DEBUG = True
 
 # set_up
 config = load_config()
@@ -41,7 +41,6 @@ rating = company["rating"]
 all_good = True
 sms_message = (
     f"NNN {rating}* network company\n"
-    f"report by {computer}\n"
 )
 
 # Compute delta time and determine before or after
@@ -94,6 +93,8 @@ if not good_activity:
 
 if all_good and good_activity:
     sms_message += "All is good"
+
+sms_message +=f"report by {computer}\n"
 
 sms_status = send_sms(message = sms_message, api_keys = free_keys)
 

@@ -1,7 +1,7 @@
 from datetime import datetime, timezone
 from jpr_lib import load_config, send_sms, safe_get
 
-DEBUG = False
+DEBUG = True
 
 # set_up
 config = load_config()
@@ -22,12 +22,12 @@ properties_info = safe_get(
 # property alert limit
 days_alert_limit = 4
 not_rented = 0
+for_rent = 0
 
 # Prepare the message
 all_good = True
 sms_message = (
-    f"ALERT from Torn Properties\n"
-    f"report by {computer}\n"
+    f"ALERT about Torn Properties\n"
 )
 
 for property_info in properties_info:
@@ -43,13 +43,27 @@ for property_info in properties_info:
                 sms_message += f"tenant: {tenant}\n"
         else: # PI is not rented
             all_good = False
-            not_rented += 1
+            if property_info["status"] =="none":
+                not_rented += 1
+            elif property_info["status"] == "for_rent":
+                for_rent += 1
+                cost_per_day = str(int(property_info["cost_per_day"]/1000))
+                rental_period = property_info["rental_period"]
+                sms_message += (f"PI on rental market:\n"
+                                f"   {rental_period} days, {cost_per_day} k$/day"
+                                f"\n")
 
 if all_good:
     sms_message += "All good!"
 else:
+    total_problems = not_rented + for_rent
+    if for_rent > 0:
+        sms_message += f"{for_rent} PI(s) on rental market\n"
     if not_rented > 0:
-        sms_message += f"{not_rented} PI not rented\n"
+        sms_message += f"{not_rented} PI(s) not rented\n"
+    sms_message += f"total: {total_problems} problems \n"
+
+sms_message += f"report by {computer}\n"
 
 sms_status = send_sms(message = sms_message, api_keys = free_keys)
 
