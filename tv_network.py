@@ -1,24 +1,8 @@
-from jpr_lib import load_config, safe_get, python_date_to_excel_number
+from jpr_lib import load_config, safe_get, python_date_to_excel_number, parse_amount
 import gspread
+from gspread.utils import ValueInputOption
 from datetime import datetime, timezone
-
-DEBUG = True
-
-# Constants
-DIRECTOR_WAGE = 4_000_000
-KIVOU_WAGE = 1_100_000
-SYS_STOCK_PRICE = 1_850_000_000
-VAULT_CONTRIBUTION = 600_000_000
-COMPANY_PRICE = 27_500_000_000
-KK_SHARE = 17_500_000_000
-
-def log(msg: str):
-    """
-    Print debug messages if DEBUG is enabled.
-    """
-    if DEBUG:
-        print(msg)
-
+#from pprint import pprint
 
 def get_config():
     """
@@ -27,10 +11,12 @@ def get_config():
     config = load_config()
     torn_keys = config["torn_keys"]
     data_path = config["data_path"]
-    json_keyfile = data_path + config["sheet_keys"]["torn_project_json"]
+    torn_project_keys = data_path + config["sheet_keys"]["torn_project_json"]
     spreadsheet_id = config["sheet_keys"]["NubTV"]
-    computer_name = config.get("computer", "unknown")
-    return torn_keys, json_keyfile, spreadsheet_id, computer_name
+    computer_name = config["computer"]
+    tv_networks_data = config["various_torn_data"]["tv_networks_data"]
+    tv_data = {key: parse_amount(value) for key, value in tv_networks_data.items()}
+    return torn_keys, torn_project_keys, spreadsheet_id, computer_name, tv_data
 
 
 def fetch_company_data(torn_key: str):
@@ -44,13 +30,12 @@ def fetch_company_data(torn_key: str):
     return company_employees, company_detailed, company_profile
 
 
-def parse_employees(company_employees: dict, now_date: datetime):
+def parse_employees(company_employees: dict, now_date: datetime, director_wage: int):
     """
     Parse and aggregate employee data for spreadsheet output and totals.
     """
     employees = []
-    wages_total = DIRECTOR_WAGE  # director wage
-
+    wages_total = director_wage  # director wage not included in API
     working_stats_eff_total = 0
     settle_total = 0
     EE_total = 0
@@ -140,7 +125,6 @@ def update_employees_sheet(gc, spreadsheet_id: str, employees: list):
     ws = gc.open_by_key(spreadsheet_id).worksheet('employees_raw')
     ws.clear()
     ws.update(range_name="A1:Z51", values=employees)
-    log("Employees data sheet updated")
 
 
 def update_wages_sheet(gc, spreadsheet_id: str, computer_name: str, current_date_str: str):
@@ -149,7 +133,6 @@ def update_wages_sheet(gc, spreadsheet_id: str, computer_name: str, current_date
     """
     ws = gc.open_by_key(spreadsheet_id).worksheet('wages')
     ws.update_cell(1, 1, f"Updated by {computer_name} {current_date_str} TCT")
-    log("Wages sheet updated")
 
 
 def update_evolution_sheet(
@@ -157,26 +140,28 @@ def update_evolution_sheet(
         current_date_num: float, wages_total: int,
         working_stats_eff_total: int, settle_total: int, EE_total: int,
         director_education_total: int, addiction_total: int, inactivity_total: int,
-        company_effectiveness_total: int
+        company_effectiveness_total: int, tv_data: dict
 ):
-    """
-    Update 'evolution' worksheet with aggregated company metrics.
-    """
-    total_investment = COMPANY_PRICE + SYS_STOCK_PRICE + VAULT_CONTRIBUTION
-    KK_investment = KK_SHARE + SYS_STOCK_PRICE + VAULT_CONTRIBUTION
+    """Parse tv_data and update evolution sheet."""
+
+    total_investment = tv_data["company_price"] + tv_data["sys_stock_price"] + tv_data["vault_contribution"]
+    KK_investment = tv_data["KK_share"]+ tv_data["sys_stock_price"]+ tv_data["vault_contribution"]
 
     daily_income = company_profile["daily_income"]
     advertising_budget = company_detailed["advertising_budget"]
 
     daily_profit = daily_income - wages_total - advertising_budget
-    minimum_funds = 7 * (wages_total - DIRECTOR_WAGE + advertising_budget)
+    minimum_funds = 7 * (wages_total - tv_data["director_wage"] + advertising_budget)
     ROI = daily_profit * 365 / total_investment
-    ROI2 = ROI + (DIRECTOR_WAGE + KIVOU_WAGE) * 365 / KK_investment
+    ROI2 = ROI + (tv_data["director_wage"] + tv_data["kivou_wage"]) * 365 / KK_investment
 
     company_effectiveness_max = (company_effectiveness_total - inactivity_total - addiction_total)
     efficiency_loss = (-inactivity_total - addiction_total) / company_effectiveness_max
 
-    L_zone = [
+
+    ws_evo = gc.open_by_key(spreadsheet_id).worksheet('evolution')
+    row = int(ws_evo.cell(1, 3).value) + 1   #  row where to write data
+    evolution_row = [
         current_date_num,
         company_profile["name"],
         company_profile["rating"],
@@ -204,22 +189,17 @@ def update_evolution_sheet(
         advertising_budget / 1_000_000,
         daily_profit / 1_000_000,
         ROI,
-        ROI2
+        ROI2,
+        f'=IF(ROW()<=33,"",SUM(Z{row - 29}:Z{row}))'  # AC
     ]
-
-    ws_evo = gc.open_by_key(spreadsheet_id).worksheet('evolution')
-    current_row = ws_evo.cell(1, 3).value  # last row that has already been written
-    current_row = 1 + int(''.join(current_row.split()))
-    zone_to_be_filled = f"A{current_row}:ZZ{current_row}"
-    ws_evo.update(range_name=zone_to_be_filled, values=[L_zone])
-    log("Evolution sheet updated")
-
+    row_range = f"A{row}:AC{row}"
+    ws_evo.update(range_name=row_range, values=[evolution_row], value_input_option=ValueInputOption.user_entered)
 
 def main():
 
-    torn_keys, json_keyfile, spreadsheet_id, computer_name = get_config()
+    torn_keys, torn_project_keys, spreadsheet_id, computer_name, tv_data = get_config()
     torn_key = torn_keys["Kwartz"]
-    gc = gspread.service_account(json_keyfile)
+    gc = gspread.service_account(torn_project_keys)
 
     company_employees, company_detailed, company_profile = (
         fetch_company_data(torn_key))
@@ -228,8 +208,9 @@ def main():
     current_date_str = now_date.strftime("%d/%m/%Y %H:%M:%S")
     current_date_num = python_date_to_excel_number(now_date)
 
-    employees, wages_total, working_stats_eff_total, settle_total, EE_total, director_education_total, addiction_total, inactivity_total, company_effectiveness_total = parse_employees(
-        company_employees, now_date)
+    (employees, wages_total, working_stats_eff_total, settle_total, EE_total, director_education_total,
+     addiction_total, inactivity_total, company_effectiveness_total) = parse_employees(
+        company_employees, now_date, tv_data["director_wage"])
 
     update_employees_sheet(gc, spreadsheet_id, employees)
     update_wages_sheet(gc, spreadsheet_id, computer_name, current_date_str)
@@ -237,8 +218,7 @@ def main():
                            current_date_num, wages_total,
                            working_stats_eff_total, settle_total, EE_total,
                            director_education_total, addiction_total, inactivity_total,
-                           company_effectiveness_total)
-
+                           company_effectiveness_total, tv_data)
 
 if __name__ == "__main__":
     main()

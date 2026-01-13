@@ -72,12 +72,12 @@ def main():
     for player_name in ('Kwartz','Kivou'):
         log(f"Updating {player_name} crimes")
         torn_key = config["torn_keys"][player_name]
-        skill_data = safe_get(f"https://api.torn.com/user/?"
-                              f"selections=skills&key={torn_key}")
+        skill_data = safe_get(f"https://api.torn.com/user/?selections=skills&key={torn_key}")
         criminal_record = safe_get(f"https://api.torn.com/user/?selections=crimes&key={torn_key}")["criminalrecord"]
         crimes2_data, crimes2_header = parse_crimes(skill_data, criminal_record, current_date_num)
         sheet_name = "Crimes2" + player_name
         write_to_sheet(gc, spreadsheet_id, sheet_name, computer_name, crimes2_data, crimes2_header)
         log(f"{player_name} crimes updated")
+
 if __name__ == "__main__":
     main()

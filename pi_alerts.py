@@ -15,8 +15,8 @@ now_date_str = now_date.strftime("%d/%m/%Y %H:%M:%S UTC")
 
 # get properties information
 properties_info = safe_get(
-    f"https://api.torn.com/v2/user/properties?filters=ownedByUser"
-    f"&offset=0&limit=20&key={torn_key}"
+    url = f"https://api.torn.com/v2/user/properties?filters=ownedByUser&offset=0&limit=20",
+    torn_key = torn_key
     )["properties"]
 
 # property alert limit
@@ -54,18 +54,17 @@ for property_info in properties_info:
                                 f"\n")
 
 if all_good:
-    sms_message += "All good!"
+    sms_message += "All good!\n"
+    sms_status = "SMS not sent"
 else:
     total_problems = not_rented + for_rent
     if for_rent > 0:
         sms_message += f"{for_rent} PI(s) on rental market\n"
     if not_rented > 0:
         sms_message += f"{not_rented} PI(s) not rented\n"
-    sms_message += f"total: {total_problems} problems \n"
-
-sms_message += f"report by {computer}\n"
-
-sms_status = send_sms(message = sms_message, api_keys = free_keys)
+    sms_message += f"total: {total_problems} problem(s) \n"
+    sms_message += f"report by {computer}\n"
+    sms_status = send_sms(message = sms_message, api_keys = free_keys)
 
 if DEBUG:
     print(sms_message)

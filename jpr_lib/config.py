@@ -5,7 +5,8 @@ import platform
 def load_config():
     """
     Search system and computer name
-    Load API keys and sheet keys from JSON files
+    Load API keys and various_torn_data from JSON files
+    Load free (phone provider)
     Return a config dict
     """
     system = platform.system()
@@ -26,6 +27,8 @@ def load_config():
         free_keys = json.load(f)
     with open(data_path + 'sheet_keys.json') as f:
         sheet_keys = json.load(f)
+    with open(data_path + 'various_torn_data.json') as f:
+        various_torn_data = json.load(f)
 
     return {
         'system': system,
@@ -34,5 +37,6 @@ def load_config():
         'scripts_path': scripts_path,
         'torn_keys': torn_keys,
         'free_keys': free_keys,
-        'sheet_keys': sheet_keys
+        'sheet_keys': sheet_keys,
+        'various_torn_data': various_torn_data
     }

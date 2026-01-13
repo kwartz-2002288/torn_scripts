@@ -3,10 +3,9 @@ import gspread
 from datetime import datetime, timezone
 
 def update_gym ( name , gc, spreadsheet_id, torn_keys, the_row ):
-
 # Get data from TORN in r (dict)
     torn_key = torn_keys[name]
-    r=safe_get(f'https://api.torn.com/user/?'
+    r = safe_get(f'https://api.torn.com/user/?'
                        f'selections=battlestats&key={torn_key}')
 # Open the Google sheet (don't forget to share it with the gspread mail address)
 ###   projettorn@appspot.gserviceaccount.com   ###

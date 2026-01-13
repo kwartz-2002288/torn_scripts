@@ -58,6 +58,7 @@ if employees_hired < employees_capacity:
     sms_message += f"ALERT! {employees_hired}/{employees_capacity} hired\n"
 
 #test trains available and alert if too high
+#trains_available = 11
 if trains_available > trains_alert_limit:
     all_good = False
     sms_message += f"ALERT! {trains_available} trains available\n"
@@ -92,7 +93,7 @@ if not good_activity:
     sms_message += activity_message
 
 if all_good and good_activity:
-    sms_message += "All is good"
+    sms_message += "All is good\n"
 
 sms_message +=f"report by {computer}\n"
 
