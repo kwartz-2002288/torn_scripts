@@ -14,7 +14,7 @@ def plot_curve(
     point_size=40,
     grid=True,
     legend_label=None,
-    figsize=(8, 5)
+    figsize=(9, 5)
 ):
     """
     Trace une courbe standardisée.
