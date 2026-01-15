@@ -2,7 +2,7 @@ from jpr_lib import load_config, safe_get, python_date_to_excel_number
 import gspread
 from datetime import datetime, timezone
 
-def update_gym ( name , gc, spreadsheet_id, torn_keys, the_row ):
+def update_gym (name , gc, spreadsheet_id, torn_keys, the_row):
 # Get data from TORN in r (dict)
     torn_key = torn_keys[name]
     r = safe_get(f'https://api.torn.com/user/?'
@@ -29,7 +29,6 @@ def main():
     gc = gspread.service_account(filename=json_keyfile)
 
     date_now = datetime.now(timezone.utc)
-    #current_date_str = date_now.strftime("%d/%m/%Y %H:%M:%S")
     current_date_num = python_date_to_excel_number(date_now)
     update_gym( "Kivou" , gc, spreadsheet_id, torn_keys, "1")
     update_gym( "Kwartz" , gc, spreadsheet_id, torn_keys, "2")

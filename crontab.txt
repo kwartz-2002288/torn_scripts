@@ -16,15 +16,13 @@
 
 
 # Spreadsheet scripts
+20,50  * * * * ~/torn_scripts/run_torn_script.sh drugs_updater.py
 25 03  * * * ~/torn_scripts/run_torn_script.sh stats_updater.py
 37 05  * * * ~/torn_scripts/run_torn_script.sh networth_updater.py
 47 04  * * * ~/torn_scripts/run_torn_script.sh gym_updater.py
 37 03  * * * ~/torn_scripts/run_torn_script.sh crimes2.py
 22 19  * * * ~/torn_scripts/run_torn_script.sh tv_network.py
-# */5 * * * * ~/torn_scripts/run_torn_script.sh targets_abroad.py
-
-# TO DO !!!
-# TornRehabUpdater.py
+# */5  * * * * ~/torn_scripts/run_torn_script.sh targets_abroad.py
 
 # SMS alerts
 2-59/3 * * * * ~/torn_scripts/run_torn_script.sh shop_surveillance_alert.py

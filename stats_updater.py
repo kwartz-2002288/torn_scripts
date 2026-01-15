@@ -40,7 +40,7 @@ def main():
 
         stats_row = [[
             current_date_num,  # A
-            bs["total"],  # B total stats
+            bs["total"],  # B total combat stats
             bs["dexterity"],  # C
             bs["strength"],  # D
             bs["defense"],  # E
@@ -51,7 +51,7 @@ def main():
             js["manual"],  # J
             js["intelligence"],  # K
             js["endurance"],  #
-            js["total"],  # M
+            js["total"],  # M total work stats
             daily_delta_js, # N
             two_month_delta_js_avg # O
             ]]
