@@ -2,7 +2,6 @@ from jpr_lib import load_config, safe_get, python_date_to_excel_number
 import gspread
 from datetime import datetime, timezone
 from gspread.utils import ValueInputOption
-from pprint import pprint
 
 def get_drugs_taken(torn_key: str):
     drugs_taken = safe_get(url="https://api.torn.com/v2/user/personalstats?cat=drugs",
@@ -113,21 +112,19 @@ def main():
 
         # --- Get addiction penalty ---
         addiction = get_addiction_penalty(torn_keys[player])
-        print(f"addiction: {addiction}")
         # Update the sheet only if something has changed
 
         row += 1
         drugs_row = create_row(row, keys, drugs_new, current_date_num, price, xan_od)
 
         if drugs_changed:
-            print(f"At least one value has changed! {drugs_changed[0]}")
             row_range = f"A{row}:O{row}"
             ws.update(range_name=row_range,
                       values=drugs_row,
                       value_input_option=ValueInputOption.user_entered)
             ws.update_cell(row, 13, -addiction)
         else:
-            print("All values are the same")
+            pass
 
         ws.update_cell(1, 1, f"updated by {computer_name}")
         ws.update_cell(2, 1, current_date_num)

@@ -1,7 +1,7 @@
 from jpr_lib import load_config, send_sms, safe_get
 from datetime import datetime
 
-DEBUG = True
+DEBUG = False
 
 # set_up
 config = load_config()
