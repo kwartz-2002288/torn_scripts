@@ -31,3 +31,8 @@ jpr_env/
 # Backup / temp files
 *~
 *.swp
+
+# Requirements and crontab file
+requirements.txt
+crontab.txt
+
