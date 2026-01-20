@@ -21,18 +21,18 @@ FREE_ERRORS = {
     500: "Server error. A problem occurred on Free Mobile's server."
 }
 
-def send_sms(message: str, api_keys: dict) -> str:
+def send_sms(message: str, sms_account: dict) -> str:
     """
     Send SMS message to free_user phone using Free Mobile API credentials.
     Returns a message indicating success or the error type.
     """
-    free_user = api_keys["free_user"]
-    free_api_key = api_keys["free_apikey"]
+    free_user = sms_account["user"]
+    free_api_key = sms_account["api_key"]
     url = f"https://smsapi.free-mobile.fr/sendmsg?user={free_user}&pass={free_api_key}&msg={message}"
     response = requests.get(url)
     return FREE_ERRORS.get(response.status_code, "Unknown error")
 
-def safe_get(url: str, verbose: bool = False, torn_key: str = None) -> dict:
+def safe_get(url: str, torn_key: str = None, verbose: bool = False) -> dict:
     """
     Secure GET request that checks for HTTP and Torn API errors.
     Supports both V1 (key in URL) and V2 (key in Authorization header) authentication.
@@ -79,22 +79,21 @@ def safe_get(url: str, verbose: bool = False, torn_key: str = None) -> dict:
 
     return data
 
-def python_date_to_excel_number(date):
+def python_date_to_excel_number(date: datetime):
     """
-    Convert a python date (utc datetime format)
-    to a number representing a date in a Google sheet
+    Convert a timezone-aware UTC datetime to a Google Sheets date number.
+    Google Sheets uses days since 1899-12-30.
     """
-    # Define the reference date for Google Sheets (December 30, 1899)
-    reference_date = datetime(1899, 12, 30, tzinfo=timezone.utc)
-    # Calculate the difference in days
-    days_difference = (date - reference_date).days
-    # Calculate the fraction of the day
-    fraction_of_day = (date - datetime(date.year, date.month, date.day,
-        tzinfo=timezone.utc)).total_seconds() / 86400.0  # 86400 seconds in a day
-    # Calculate the total number
-    date_number = days_difference + fraction_of_day
-    return date_number
+    if date.tzinfo is None:
+        raise ValueError("Datetime must be timezone-aware (UTC)")
 
+    reference = datetime(1899, 12, 30, tzinfo=timezone.utc)
+    delta = date - reference
+    return delta.total_seconds() / 86400.0
+
+def timestamp_to_excel_number(ts: int) -> float:
+    dt = datetime.fromtimestamp(ts, tz=timezone.utc)
+    return python_date_to_excel_number(dt)
 
 def timestamp_to_date(ts: int) -> str:
     """
