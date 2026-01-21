@@ -1,7 +1,9 @@
 import requests, json
 import math, random
 from datetime import datetime, timezone
-from pprint import pprint
+import logging
+
+logger = logging.getLogger(__name__)
 
 #
 # Various utilities for torn
@@ -21,16 +23,32 @@ FREE_ERRORS = {
     500: "Server error. A problem occurred on Free Mobile's server."
 }
 
-def send_sms(message: str, sms_account: dict) -> str:
+def send_sms(message: str, sms_account: dict) -> bool:
     """
     Send SMS message to free_user phone using Free Mobile API credentials.
     Returns a message indicating success or the error type.
     """
     free_user = sms_account["user"]
     free_api_key = sms_account["api_key"]
-    url = f"https://smsapi.free-mobile.fr/sendmsg?user={free_user}&pass={free_api_key}&msg={message}"
-    response = requests.get(url)
-    return FREE_ERRORS.get(response.status_code, "Unknown error")
+    url = (f"https://smsapi.free-mobile.fr/sendmsg"
+           f"?user={free_user}&pass={free_api_key}&msg={message}")
+
+    try:
+        response = requests.get(url, timeout=10)
+    except requests.RequestException as exc:
+        logger.error("SMS request failed: %s", exc)
+        return False
+
+    if response.status_code != 200:
+        error_msg = FREE_ERRORS.get(response.status_code, "Unknown error")
+        logger.warning(
+            "SMS sending failed (status %s): %s",
+            response.status_code,
+            error_msg,
+        )
+        return False
+
+    return True
 
 def safe_get(url: str, torn_key: str = None, verbose: bool = False) -> dict:
     """
@@ -79,7 +97,7 @@ def safe_get(url: str, torn_key: str = None, verbose: bool = False) -> dict:
 
     return data
 
-def python_date_to_excel_number(date: datetime):
+def datetime_to_excel_date(date: datetime):
     """
     Convert a timezone-aware UTC datetime to a Google Sheets date number.
     Google Sheets uses days since 1899-12-30.
@@ -91,19 +109,28 @@ def python_date_to_excel_number(date: datetime):
     delta = date - reference
     return delta.total_seconds() / 86400.0
 
-def timestamp_to_excel_number(ts: int) -> float:
+def timestamp_to_excel_date(ts: int) -> float:
     dt = datetime.fromtimestamp(ts, tz=timezone.utc)
-    return python_date_to_excel_number(dt)
+    return datetime_to_excel_date(dt)
 
-def timestamp_to_date(ts: int) -> str:
+def timestamp_to_str_date(ts: int, format="%Y-%m-%d %H:%M:%S") -> str:
     """
-    Convert a Unix timestamp (seconds) to a human-readable date string.
-    Args:
-        ts (int): Unix timestamp in seconds.
-    Returns:
-        str: Date in 'YYYY-MM-DD HH:MM:SS' format.
+    Convert a Unix timestamp to a formatted date string in UTC.
+
+    Parameters
+    ----------
+    ts : int
+        Unix timestamp (seconds since 1970-01-01 UTC)
+    format : str, optional
+        Format string for strftime (default "%Y-%m-%d %H:%M:%S")
+
+    Returns
+    -------
+    str
+        Formatted UTC date string
     """
-    return datetime.fromtimestamp(ts).strftime("%Y-%m-%d %H:%M:%S")
+    return datetime.fromtimestamp(ts, tz=timezone.utc).strftime(format)
+
 
 # --------------------------------------------------------------------
 # Vladar formula : Stat constants (A, B, C) for each stat in Torn

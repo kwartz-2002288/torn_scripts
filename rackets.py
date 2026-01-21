@@ -1,4 +1,4 @@
-from jpr_lib import load_config, safe_get, python_date_to_excel_number, timestamp_to_excel_number, send_sms
+from jpr_lib import load_config, safe_get, datetime_to_excel_date, timestamp_to_excel_date, send_sms
 import gspread
 from datetime import datetime, timezone
 
@@ -85,7 +85,7 @@ def log_event(spreadsheet, event, faction_name, racket_name, territory):
     ws_logs = spreadsheet.worksheet("Logs")
     from datetime import datetime
     ws_logs.append_row([
-        python_date_to_excel_number(datetime.now(timezone.utc)),
+        datetime_to_excel_date(datetime.now(timezone.utc)),
         event,
         faction_name,
         racket_name,
@@ -161,8 +161,8 @@ def update_territory(
     co_leader = get_user_name(faction.get("co_leader_id"), torn_key, user_cache)
 
     ws.append_row([
-        timestamp_to_excel_number(racket["created_at"]),
-        timestamp_to_excel_number(racket["changed_at"]),
+        timestamp_to_excel_date(racket["created_at"]),
+        timestamp_to_excel_date(racket["changed_at"]),
         faction["name"],
         racket["faction_id"],
         racket["name"],
@@ -242,7 +242,7 @@ def main():
 
     ws_update = spreadsheet.worksheet("Last update")
     ws_update.update_cell(1, 1, f"Updated by {computer}")
-    ws_update.update_cell(1, 2, python_date_to_excel_number(datetime.now(timezone.utc)))
+    ws_update.update_cell(1, 2, datetime_to_excel_date(datetime.now(timezone.utc)))
 
 if __name__ == "__main__":
     main()
