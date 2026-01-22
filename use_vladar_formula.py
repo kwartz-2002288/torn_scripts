@@ -1,4 +1,3 @@
-
 from jpr_lib import vladar_formula
 import numpy as np
 import matplotlib.pyplot as plt
@@ -47,9 +46,9 @@ def plot_curve(
     plt.tight_layout()
     plt.show()
 
-# --------------------------------------------------------------------
+# ---------------------------------------------------------------------
 # MAIN PROGRAM
-# --------------------------------------------------------------------
+# ---------------------------------------------------------------------
 
 if __name__ == "__main__":
     print("=== Torn Stat Gain Calculator ===")

@@ -72,8 +72,9 @@ def filter_members(members, state_path):
     new_state = {}
     now = datetime.now(timezone.utc).timestamp()
 
-    for member_id, info in members.items():
-        desc = info.get("status", {}).get("description", "")
+    for member in members:
+        member_id = member["id"]
+        desc = member["status"]["description"]
         desc_lower = desc.lower()
 
         # Filter conditions :
@@ -103,8 +104,8 @@ def filter_members(members, state_path):
 
         filtered.append({
             "id": member_id,
-            "name": info.get("name", ""),
-            "level": info.get("level", 0),
+            "name": member["name"],
+            "level": member["level"],
             "status": desc,
             "link": f"https://www.torn.com/profiles.php?XID={member_id}",
             "destination": destination,
@@ -149,33 +150,36 @@ def write_to_sheet(gc, spreadsheet_id, sheet_name, computer_name, filtered):
 
 def main():
     config = load_config()
-    torn_key = config["torn_keys"]["Kwartz"]
+    runtime_data = config["runtime_data"]
+    service_file = config["data_path"] + runtime_data["google"]["service_account_file"]
     data_path_abroad = config["data_path"] + "abroad/"
-    json_keyfile = config["data_path"] + config["sheet_keys"]["torn_project_json"]
-    spreadsheet_id = config["sheet_keys"]["abroad_targets"]
-    computer_name = config.get("computer", "unknown")
+    computer = config["computer"]
 
-    gc = gspread.service_account(filename=json_keyfile)
+    torn_key = runtime_data["torn_keys"]["Kwartz"]
+    spreadsheet_id = runtime_data["spreadsheet_ids"]["abroad_targets"]
 
-    with open(data_path_abroad + "factions_abroad.json", 'r') as f:
+    gs_client = gspread.service_account(filename=service_file)
+
+    with open( data_path_abroad + "factions_abroad.json", 'r') as f:
         faction_list = json.load(f)
-
+        print(faction_list)
     for faction_id in faction_list:
         if DEBUG:
             print(f"Fetching data for faction {faction_id}...")
 
-        url = f"https://api.torn.com/faction/{faction_id}?selections=&key={torn_key}"
-        data = safe_get(url)
-        members = data.get("members", {})
-        tag = data.get("tag", f"faction_{faction_id}")
-
-        state_path = os.path.join(data_path_abroad, f"abroad_state_{faction_id}.json")
+        members = safe_get(url=f"https://api.torn.com/v2/faction/{faction_id}/members", torn_key=torn_key
+                            )["members"]
+        faction_data = safe_get(url=f"https://api.torn.com/v2/faction/{faction_id}/basic", torn_key=torn_key
+                            )["basic"]
+        faction_name = faction_data["name"]
+        print(faction_name)
+        state_path = data_path_abroad + f"abroad_state_{faction_id}.json"
 
         filtered = filter_members(members, state_path)
-        write_to_sheet(gc, spreadsheet_id, tag, computer_name, filtered)
-        if DEBUG:
-            print(f"{len(filtered)} members written to tab '{tag}'.")
+        write_to_sheet(gs_client, spreadsheet_id, faction_name, computer, filtered)
 
+        if DEBUG:
+            print(f"{len(filtered)} members written to tab '{faction_name}'.")
 
 if __name__ == "__main__":
     main()

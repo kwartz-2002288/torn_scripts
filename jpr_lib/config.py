@@ -1,9 +1,6 @@
 def load_config():
     """
     Load configuration for Torn project scripts.
-
-    legacy=True  -> load old separate JSON files (torn_keys, free_keys, sheet_keys, various_torn_data)
-    legacy=False -> load new runtime_data.json (consolidated)
     """
     import os, platform, json
 

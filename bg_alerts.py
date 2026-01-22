@@ -30,13 +30,13 @@ Nikeh_shop_inventory = safe_get(
 
 # Prepare the message
 all_good = True
-lines = ["ALERT from Nikeh Shop"]
+msg_lines = ["ALERT from Nikeh Shop"]
 
 if id_Boxing_Gloves in Nikeh_shop_inventory:
     n_items = Nikeh_shop_inventory[id_Boxing_Gloves]["in_stock"]
-    lines.append(f"{n_items} boxing gloves here!")
-    lines.append(f"report by {computer}")
-    sms_message = "\n".join(lines)
+    msg_lines.append(f"{n_items} boxing gloves here!")
+    msg_lines.append(f"Report by {computer}")
+    sms_message = "\n".join(msg_lines)
 
     if not send_sms(message=sms_message, sms_account=sms_account):
         logging.error(

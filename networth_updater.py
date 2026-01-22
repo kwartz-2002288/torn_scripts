@@ -1,4 +1,4 @@
-from jpr_lib import load_config, safe_get, python_date_to_excel_number, parse_amount
+from jpr_lib import load_config, safe_get, datetime_to_excel_date, parse_amount
 import gspread
 from gspread.utils import ValueInputOption
 from datetime import datetime, timezone
@@ -38,16 +38,21 @@ def evaluate_networth_correction(networth_corrections, torn_key):
     return company_correction, stocks_lent_value
 
 def main():
-    # --- Get configuration (api keys, data, google sheets access...) ---
+    # --- Get configuration (api keys, data, google sheets client and id...) ---
     config = load_config()
-    torn_keys = config["torn_keys"]
-    torn_project_keyfile = config["data_path"] + config["sheet_keys"]["torn_project_json"]
-    computer_name = config["computer"]
-    networth_corrections = config["various_torn_data"]["networth_corrections"]
+    runtime_data = config["runtime_data"]
+    service_file = config["data_path"] + runtime_data["google"]["service_account_file"]
+    computer = config["computer"]
 
-    gc = gspread.service_account(filename=torn_project_keyfile)
-    spreadsheet_id = config["sheet_keys"]["torn_stats"]
-    ws = gc.open_by_key(spreadsheet_id).worksheet('NW')
+    torn_keys = runtime_data["torn_keys"]
+    spreadsheet_id = runtime_data["spreadsheet_ids"]["torn_stats"]
+
+    networth_corrections = runtime_data["networth_corrections"]
+    # Connect to Google Sheets
+    gs_client = gspread.service_account(filename=service_file) #
+
+    current_date_excel = datetime_to_excel_date(datetime.now(timezone.utc))
+    ws = gs_client.open_by_key(spreadsheet_id).worksheet('NW')
 
     # --- Get networth information ---
     faction_balance_total = (get_faction_balance(torn_keys['Kivou']) +
@@ -69,13 +74,10 @@ def main():
     networth_corrected = networth_total + faction_balance_total + company_correction + stocks_lent_value
     stock_total_corrected = stock_total + stocks_lent_value
 
-    date_now = datetime.now(timezone.utc)
-    current_date_num = python_date_to_excel_number(date_now)
-
     # --- Spreadsheet write ---
     row = int(ws.cell(1,2).value) + 1
     stats_row = [[
-        current_date_num,  # A
+        current_date_excel,  # A
         networth_total,  # B
         stock_total,  # C
         company_total,  # D
@@ -91,8 +93,8 @@ def main():
     ]]
     row_range = f"A{row}:M{row}"
     ws.update(range_name=row_range, values=stats_row, value_input_option=ValueInputOption.user_entered)
-    ws.update_cell(2, 2, computer_name)
+    ws.update_cell(2, 2, computer)
 
-
+# updated with runtime_data
 if __name__ == "__main__":
     main()

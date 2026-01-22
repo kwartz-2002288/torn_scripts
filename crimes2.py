@@ -1,4 +1,4 @@
-from jpr_lib import load_config, safe_get, python_date_to_excel_number
+from jpr_lib import load_config, safe_get, datetime_to_excel_date
 import gspread
 from datetime import datetime, timezone
 
@@ -59,25 +59,30 @@ def write_to_sheet(gc, spreadsheet_id, sheet_name, computer_name, crimes2_data, 
     log(f"write_to_sheet done")
 
 def main():
+    # Load configuration
     config = load_config()
-    json_keyfile = config["data_path"] + config["sheet_keys"]["torn_project_json"]
-    spreadsheet_id = config["sheet_keys"]["torn_stats"]
-    computer_name = config.get("computer", "unknown")
-    gc = gspread.service_account(filename=json_keyfile)
+    runtime_data = config["runtime_data"]
+    service_file = config["data_path"] + runtime_data["google"]["service_account_file"]
+    computer = config["computer"]
 
-    date_now = datetime.now(timezone.utc)
-    #current_date_str = date_now.strftime("%d/%m/%Y %H:%M:%S")
-    current_date_num = python_date_to_excel_number(date_now)
+    torn_keys = runtime_data["torn_keys"]
+    spreadsheet_id = runtime_data["spreadsheet_ids"]["torn_stats"]
+
+    # Connect to Google Sheets
+    gs_client = gspread.service_account(filename=service_file) #
+
+    current_date_excel = datetime_to_excel_date(datetime.now(timezone.utc))
 
     for player_name in ('Kwartz','Kivou'):
         log(f"Updating {player_name} crimes")
-        torn_key = config["torn_keys"][player_name]
+        torn_key = torn_keys[player_name]
         skill_data = safe_get(f"https://api.torn.com/user/?selections=skills&key={torn_key}")
         criminal_record = safe_get(f"https://api.torn.com/user/?selections=crimes&key={torn_key}")["criminalrecord"]
-        crimes2_data, crimes2_header = parse_crimes(skill_data, criminal_record, current_date_num)
+        crimes2_data, crimes2_header = parse_crimes(skill_data, criminal_record, current_date_excel)
         sheet_name = "Crimes2" + player_name
-        write_to_sheet(gc, spreadsheet_id, sheet_name, computer_name, crimes2_data, crimes2_header)
+        write_to_sheet(gs_client, spreadsheet_id, sheet_name, computer, crimes2_data, crimes2_header)
         log(f"{player_name} crimes updated")
 
+# updated with runtime_data
 if __name__ == "__main__":
     main()

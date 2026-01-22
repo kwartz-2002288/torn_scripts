@@ -1,10 +1,17 @@
-from jpr_lib import load_config, safe_get, datetime_to_excel_date, timestamp_to_excel_date, send_sms
-import gspread
 from datetime import datetime, timezone
 
-def get_our_rackets(torn_key: str, faction_ids: set[int]) -> dict[str, dict]:
+import gspread
+
+from jpr_lib import (
+    datetime_to_excel_date, timestamp_to_excel_date,
+    load_config,
+    safe_get,
+    send_sms,
+)
+
+def get_tracked_rackets(torn_key: str, faction_ids: set[int]) -> dict[str, dict]:
     """
-    Return active rackets indexed by territory code.
+    Return active rackets for allied factions, indexed by territory code.
     """
     rackets = safe_get(
         url="https://api.torn.com/v2/faction/rackets",
@@ -16,13 +23,21 @@ def get_our_rackets(torn_key: str, faction_ids: set[int]) -> dict[str, dict]:
         if r["faction_id"] in faction_ids
     }
 
-def detect_disappeared_rackets(spreadsheet, sms_account : dict, computer: str, active_territories: set[str]):
+def detect_disappeared_rackets(
+    spreadsheet,
+    sms_account: dict,
+    computer: str,
+    active_territories: set[str],
+) -> None:
+
     for ws in spreadsheet.worksheets():
         title = ws.title
         if len(title) == 3 and title.isupper() and title.isalpha() and title not in active_territories:
             records = ws.get_all_records()
             last_snapshot = records[-1] if records else None
-            handle_event(
+            if not last_snapshot:
+                continue
+            notify_and_log_event(
                 spreadsheet,
                 sms_account,
                 computer,
@@ -36,7 +51,8 @@ def detect_disappeared_rackets(spreadsheet, sms_account : dict, computer: str, a
             new_title = title.lower()
             ws.update_title(new_title)
 
-def get_or_create_territory_sheet(spreadsheet, territory: str):
+
+def get_or_create_racket_sheet(spreadsheet, territory: str):
     try:
         return spreadsheet.worksheet(territory), False
     except gspread.WorksheetNotFound:
@@ -54,12 +70,13 @@ def get_or_create_territory_sheet(spreadsheet, territory: str):
             "reward_quantity",
             "leader",
             "co_leader",
-            "timestamp"
+            "timestamp",
         ])
         return ws, True
 
 
 def get_faction_basic(faction_id: int, torn_key: str, cache: dict) -> dict:
+
     if faction_id not in cache:
         cache[faction_id] = safe_get(
             f"https://api.torn.com/v2/faction/{faction_id}/basic",
@@ -69,6 +86,7 @@ def get_faction_basic(faction_id: int, torn_key: str, cache: dict) -> dict:
 
 
 def get_user_name(user_id: int | None, torn_key: str, cache: dict[int, str]) -> str:
+
     if not user_id:
         return "vacant"
 
@@ -78,18 +96,17 @@ def get_user_name(user_id: int | None, torn_key: str, cache: dict[int, str]) -> 
             torn_key
         )["profile"]
         cache[user_id] = profile["name"]
-
     return cache[user_id]
+
 
 def log_event(spreadsheet, event, faction_name, racket_name, territory):
     ws_logs = spreadsheet.worksheet("Logs")
-    from datetime import datetime
     ws_logs.append_row([
         datetime_to_excel_date(datetime.now(timezone.utc)),
         event,
         faction_name,
         racket_name,
-        territory
+        territory,
     ])
 
 def build_and_send_alert(
@@ -102,8 +119,8 @@ def build_and_send_alert(
     faction_name: str | None = None,
     level: int | None = None,
 ):
-    lines = ["ALERT from rackets monitoring"]
 
+    lines = ["ALERT from rackets monitoring"]
     match event:
         case "spawned":
             lines.append("New racket spawned:")
@@ -126,7 +143,18 @@ def build_and_send_alert(
     message = "\n".join(lines)
     send_sms(message = message, sms_account = sms_account)
 
-def handle_event(spreadsheet, sms_account, computer, *, event, territory, racket_name, faction_name, level):
+
+def notify_and_log_event(spreadsheet,
+                         sms_account,
+                         computer,
+                         *,
+                         event,
+                         territory,
+                         racket_name,
+                         faction_name,
+                         level
+):
+
     build_and_send_alert(
         sms_account,
         computer,
@@ -138,7 +166,8 @@ def handle_event(spreadsheet, sms_account, computer, *, event, territory, racket
     )
     log_event(spreadsheet, event, faction_name, racket_name, territory)
 
-def update_territory(
+
+def update_racket(
     spreadsheet,
     computer : str,
     sms_account: dict,
@@ -148,7 +177,8 @@ def update_territory(
     faction_cache: dict,
     user_cache: dict
 ):
-    ws, is_new = get_or_create_territory_sheet(spreadsheet, territory)
+
+    ws, is_new = get_or_create_racket_sheet(spreadsheet, territory)
     records = ws.get_all_records()
     last_snapshot = records[-1] if records else None
 
@@ -156,7 +186,6 @@ def update_territory(
         return  # no evolution !
 
     faction = get_faction_basic(racket["faction_id"], torn_key, faction_cache)
-
     leader = get_user_name(faction.get("leader_id"), torn_key, user_cache)
     co_leader = get_user_name(faction.get("co_leader_id"), torn_key, user_cache)
 
@@ -173,11 +202,11 @@ def update_territory(
         racket["reward"]["quantity"],
         leader,
         co_leader,
-        racket["changed_at"]
+        racket["changed_at"],
     ])
 
     if is_new:
-        handle_event(
+        notify_and_log_event(
             spreadsheet,
             sms_account,
             computer,
@@ -185,7 +214,7 @@ def update_territory(
             territory=territory,
             racket_name=racket["name"],
             faction_name=faction["name"],
-            level=racket["level"]
+            level=racket["level"],
         )
         return
 
@@ -194,7 +223,7 @@ def update_territory(
 
     delta = racket["level"] - int(last_snapshot["level"])
 
-    handle_event(
+    notify_and_log_event(
         spreadsheet,
         sms_account,
         computer,
@@ -212,16 +241,15 @@ def main():
     computer = config["computer"]
 
     torn_key = runtime_data["torn_keys"]["Kwartz"]
-    spreadsheet_id = runtime_data["spreadsheets"]["rackets_monitoring"]
+    spreadsheet_id = runtime_data["spreadsheet_ids"]["rackets_monitoring"]
     sms_account = runtime_data["sms_account"]
 
-    gc = gspread.service_account(filename=service_file)
-    spreadsheet = gc.open_by_key(spreadsheet_id)
+    gs_client = gspread.service_account(filename=service_file)
+    spreadsheet = gs_client.open_by_key(spreadsheet_id)
 
     faction_ids = {27223, 14078, 33241}
 
-    rackets = get_our_rackets(torn_key, faction_ids)
-    print(f"Found {len(rackets)} active rackets:", list(rackets.keys()))
+    rackets = get_tracked_rackets(torn_key, faction_ids)
 
     detect_disappeared_rackets(spreadsheet, sms_account, computer, set(rackets.keys()))
 
@@ -229,7 +257,7 @@ def main():
     user_cache = {}
 
     for territory, racket in rackets.items():
-        update_territory(
+        update_racket(
             spreadsheet,
             computer,
             sms_account,
@@ -237,12 +265,13 @@ def main():
             racket,
             torn_key,
             faction_cache,
-            user_cache
+            user_cache,
         )
 
     ws_update = spreadsheet.worksheet("Last update")
     ws_update.update_cell(1, 1, f"Updated by {computer}")
     ws_update.update_cell(1, 2, datetime_to_excel_date(datetime.now(timezone.utc)))
 
+# updated with runtime_data
 if __name__ == "__main__":
     main()

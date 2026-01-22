@@ -1,6 +1,6 @@
 from jpr_lib import load_config, safe_get, datetime_to_excel_date
-import gspread
 from datetime import datetime, timezone
+import gspread
 
 def update_gym(ws, name: str, torn_keys: dict, the_row: str):
     """
@@ -12,7 +12,7 @@ def update_gym(ws, name: str, torn_keys: dict, the_row: str):
     battle_stats = safe_get(
         url=f"https://api.torn.com/v2/user/personalstats?cat=battle_stats",
         torn_key=torn_key
-    )["personalstats"]["battle_stats"]
+        )["personalstats"]["battle_stats"]
 
     # Prepare values
     stats_values = [battle_stats[stat] for stat in ['dexterity', 'defense', 'speed', 'strength']]
@@ -31,7 +31,7 @@ def main():
     computer = config["computer"]
 
     torn_keys = runtime_data["torn_keys"]
-    spreadsheet_id = runtime_data["spreadsheets"]["torn_stats"]
+    spreadsheet_id = runtime_data["spreadsheet_ids"]["torn_stats"]
 
     # Connect to Google Sheets
     gs_client = gspread.service_account(filename=service_file) #
@@ -47,6 +47,6 @@ def main():
     ws_gym.update_cell(3, 1, f"Updated by {computer}")
     ws_gym.update_cell(3, 2, current_date_num)
 
-
+# updated with runtime_data
 if __name__ == "__main__":
     main()

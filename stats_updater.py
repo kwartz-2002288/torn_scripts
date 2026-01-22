@@ -1,4 +1,4 @@
-from jpr_lib import load_config, safe_get, python_date_to_excel_number
+from jpr_lib import load_config, safe_get, datetime_to_excel_date
 import gspread
 from datetime import datetime, timezone
 from gspread.utils import ValueInputOption
@@ -11,16 +11,19 @@ def get_stats(torn_key: str):
     return battle_stats, jobs_stats
 
 def main():
-    # --- Get configuration (api keys, data, google sheets access...) ---
+    # Load configuration
     config = load_config()
-    torn_keys = config["torn_keys"]
-    torn_project_keyfile = config["data_path"] + config["sheet_keys"]["torn_project_json"]
-    computer_name = config.get("computer", "unknown")
-    date_now = datetime.now(timezone.utc)
-    current_date_num = python_date_to_excel_number(date_now)
+    runtime_data = config["runtime_data"]
+    service_file = config["data_path"] + runtime_data["google"]["service_account_file"]
+    computer = config["computer"]
 
-    gc = gspread.service_account(filename=torn_project_keyfile)
-    spreadsheet_id = config["sheet_keys"]["torn_stats"]
+    torn_keys = runtime_data["torn_keys"]
+    spreadsheet_id = runtime_data["spreadsheet_ids"]["torn_stats"]
+
+    # Connect to Google Sheets
+    gs_client = gspread.service_account(filename=service_file) #
+
+    current_date_excel = datetime_to_excel_date(datetime.now(timezone.utc))
 
     for player in ("Kivou","Kwartz"):
 
@@ -28,7 +31,7 @@ def main():
         bs, js = get_stats(torn_key=torn_keys[player])
 
         # --- Spreadsheet write ---
-        ws = gc.open_by_key(spreadsheet_id).worksheet(f'Stats{player}')
+        ws = gs_client.open_by_key(spreadsheet_id).worksheet(f'Stats{player}')
         row = int(ws.cell(1,2).value) + 1
 
         # --- Delta and average formulas (computed in spreadsheet) ---
@@ -39,7 +42,7 @@ def main():
         two_month_delta_js_avg = f'=IF(ROW()<=62,"",(M{row}-M{row - 60})/60)'
 
         stats_row = [[
-            current_date_num,  # A
+            current_date_excel,  # A
             bs["total"],  # B total combat stats
             bs["dexterity"],  # C
             bs["strength"],  # D
@@ -60,9 +63,9 @@ def main():
         ws.update(range_name=row_range,
                   values=stats_row,
                   value_input_option=ValueInputOption.user_entered)
-        ws.update_cell(2,1, f"updated by {computer_name}")
+        ws.update_cell(2,1, f"updated by {computer}")
 
-    ws = gc.open_by_key(spreadsheet_id).worksheet(f'StatsKwartz')
+    ws = gs_client.open_by_key(spreadsheet_id).worksheet(f'StatsKwartz')
     ws.update(range_name=f"P{row}",
               values=[[f"=B{row}-StatsKivou!B{row}"]],
               value_input_option=ValueInputOption.user_entered)

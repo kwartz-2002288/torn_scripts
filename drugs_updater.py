@@ -1,6 +1,7 @@
-from jpr_lib import load_config, safe_get, python_date_to_excel_number
-import gspread
+from jpr_lib import load_config, safe_get, datetime_to_excel_date
 from datetime import datetime, timezone
+import gspread
+
 from gspread.utils import ValueInputOption
 
 def get_drugs_taken(torn_key: str):
@@ -52,15 +53,19 @@ def create_row(row, keys, drugs_new, current_date_num, price, xan_od):
     return drugs_row
 
 def main():
-    # --- Get configuration (api keys, data, google sheets access...) ---
+    # Load configuration
     config = load_config()
-    torn_keys = config["torn_keys"]
-    torn_project_keyfile = config["data_path"] + config["sheet_keys"]["torn_project_json"]
-    gc = gspread.service_account(filename=torn_project_keyfile)
-    spreadsheet_id = config["sheet_keys"]["torn_stats"]
-    computer_name = config.get("computer", "unknown")
-    date_now = datetime.now(timezone.utc)
-    current_date_num = python_date_to_excel_number(date_now)
+    runtime_data = config["runtime_data"]
+    service_file = config["data_path"] + runtime_data["google"]["service_account_file"]
+    computer = config["computer"]
+
+    torn_keys = runtime_data["torn_keys"]
+    spreadsheet_id = runtime_data["spreadsheet_ids"]["torn_stats"]
+
+    # Connect to Google Sheets
+    gs_client = gspread.service_account(filename=service_file) #
+
+    current_date_excel = datetime_to_excel_date(datetime.now(timezone.utc))
 
     # --- Get drugs price ---
     drugs_price = get_drugs_price(torn_keys["Kwartz"])
@@ -71,7 +76,7 @@ def main():
         drugs_new = get_drugs_taken(torn_key=torn_keys[player])
 
         # --- Spreadsheet to update ---
-        ws = gc.open_by_key(spreadsheet_id).worksheet(f'Drugs{player}')
+        ws = gs_client.open_by_key(spreadsheet_id).worksheet(f'Drugs{player}')
 
         # --- Read old numbers for drugs taken in current row ---
         row = int(ws.cell(2,2).value)
@@ -115,7 +120,7 @@ def main():
         # Update the sheet only if something has changed
 
         row += 1
-        drugs_row = create_row(row, keys, drugs_new, current_date_num, price, xan_od)
+        drugs_row = create_row(row, keys, drugs_new, current_date_excel, price, xan_od)
 
         if drugs_changed:
             row_range = f"A{row}:O{row}"
@@ -126,8 +131,9 @@ def main():
         else:
             pass
 
-        ws.update_cell(1, 1, f"updated by {computer_name}")
-        ws.update_cell(2, 1, current_date_num)
+        ws.update_cell(1, 1, f"updated by {computer}")
+        ws.update_cell(2, 1, current_date_excel)
 
+# updated with runtime_data
 if __name__ == "__main__":
     main()

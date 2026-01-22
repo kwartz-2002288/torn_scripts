@@ -113,7 +113,7 @@ def timestamp_to_excel_date(ts: int) -> float:
     dt = datetime.fromtimestamp(ts, tz=timezone.utc)
     return datetime_to_excel_date(dt)
 
-def timestamp_to_str_date(ts: int, format="%Y-%m-%d %H:%M:%S") -> str:
+def timestamp_to_str_date(ts: int, date_format="%Y-%m-%d %H:%M:%S") -> str:
     """
     Convert a Unix timestamp to a formatted date string in UTC.
 
@@ -121,7 +121,7 @@ def timestamp_to_str_date(ts: int, format="%Y-%m-%d %H:%M:%S") -> str:
     ----------
     ts : int
         Unix timestamp (seconds since 1970-01-01 UTC)
-    format : str, optional
+    date_format : str, optional
         Format string for strftime (default "%Y-%m-%d %H:%M:%S")
 
     Returns
@@ -129,17 +129,17 @@ def timestamp_to_str_date(ts: int, format="%Y-%m-%d %H:%M:%S") -> str:
     str
         Formatted UTC date string
     """
-    return datetime.fromtimestamp(ts, tz=timezone.utc).strftime(format)
+    return datetime.fromtimestamp(ts, tz=timezone.utc).strftime(date_format)
 
 
 # --------------------------------------------------------------------
 # Vladar formula : Stat constants (A, B, C) for each stat in Torn
 # --------------------------------------------------------------------
 STAT_CONSTANTS = {
-    "strength":  {"base_factor_A": 1600.0, "base_factor_B": 1700.0, "random_range_C": 700},
-    "speed":     {"base_factor_A": 1600.0, "base_factor_B": 2000.0, "random_range_C": 1350},
-    "dexterity": {"base_factor_A": 1800.0, "base_factor_B": 1500.0, "random_range_C": 1000},
-    "defense":   {"base_factor_A": 2100.0, "base_factor_B": -600.0, "random_range_C": 1500},
+    "strength":  {"base_factor_a": 1600.0, "base_factor_b": 1700.0, "random_range_c": 700},
+    "speed":     {"base_factor_a": 1600.0, "base_factor_b": 2000.0, "random_range_c": 1350},
+    "dexterity": {"base_factor_a": 1800.0, "base_factor_b": 1500.0, "random_range_c": 1000},
+    "defense":   {"base_factor_a": 2100.0, "base_factor_b": -600.0, "random_range_c": 1500},
 }
 # --------------------------------------------------------------------
 # Compute Torn stat gain for one train (delta_stat)
@@ -197,9 +197,9 @@ def vladar_formula(
         raise ValueError(f"Invalid stat '{stat_key}'. Choose from {list(STAT_CONSTANTS.keys())}.")
 
     const = STAT_CONSTANTS[key]
-    A = const["base_factor_A"]
-    B = const["base_factor_B"]
-    C = const["random_range_C"]
+    a = const["base_factor_a"]
+    b = const["base_factor_b"]
+    c = const["random_range_c"]
 
     # --- Soft cap for current_stat > 50M ---
     if current_stat < 50_000_000:
@@ -215,17 +215,17 @@ def vladar_formula(
     # Additive terms
     term_from_stat = effective_stat * multiplier
     term_from_happy = 8.0 * (happy ** 1.05)
-    term_from_A = (1.0 - (happy / 99999.0) ** 2.0) * A
-    term_from_B = B
+    term_from_a = (1.0 - (happy / 99999.0) ** 2.0) * a
+    term_from_b = b
 
     # Random term optional
     rand_term = 0
     if include_random:
         if random_seed is not None:
             random.seed(random_seed)
-        rand_term = random.randint(-C, C)
+        rand_term = random.randint(-c, c)
     # Base sum
-    base_sum = term_from_stat + term_from_happy + term_from_A + term_from_B + rand_term
+    base_sum = term_from_stat + term_from_happy + term_from_a + term_from_b + rand_term
     # Multiply by gym bonus and energy per train. Normalize.
     base_sum *= (1.0 / 200000.0) * gym_bonus * energy_per_train
 
@@ -282,11 +282,11 @@ def col_name(col_idx: int) -> str:
     ### Result
     return name
 
-def point_value_averaged(torn_key: str = None, N_average: int =10, verbose: bool= False):
+def point_value_averaged(torn_key: str = None, n_average: int =10, verbose: bool= False) -> int:
     """
     Compute point value on torn market point
     :param torn_key: torn API key
-    :param N_average: price is computed by averaging the 10 lowest prices entries
+    :param n_average: price is computed by averaging the 10 lowest prices entries
     :param verbose: print
     :return: point value in $
     """
@@ -296,7 +296,6 @@ def point_value_averaged(torn_key: str = None, N_average: int =10, verbose: bool
     costs = [entry["cost"] for entry in points_market.values()]
     min_cost = min(costs)
     if verbose:
-#        pprint(points_market)
         print("Minimum cost:", min_cost)
 
     # Convert dict to list of tuples (id, info) and sort by "cost"
@@ -306,7 +305,7 @@ def point_value_averaged(torn_key: str = None, N_average: int =10, verbose: bool
     )
 
     # Take first N entries with the lowest cost
-    top = sorted_entries[:N_average]
+    top = sorted_entries[:n_average]
 
     # Display them
     if verbose:
@@ -319,9 +318,9 @@ def point_value_averaged(torn_key: str = None, N_average: int =10, verbose: bool
         total_quantity += qty
         if verbose:
             print(f"{cost} | {qty}")
-    average_cost = total_cost / total_quantity
+    average_cost = int(total_cost / total_quantity)
     if verbose:
-        print(f"average point cost: {int(average_cost)} $")
+        print(f"average point cost: {average_cost} $")
         print(f"total quantity: {total_quantity} points")
         print(f"total cost: {int(total_cost/1_000_000)} m$")
     return average_cost
