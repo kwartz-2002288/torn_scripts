@@ -6,20 +6,32 @@ DEBUG = False
 
 # set_up
 config = load_config()
-torn_key = config["torn_keys"]["Kwartz"]
-free_keys = config["free_keys"]
+runtime_data = config["runtime_data"]
 computer = config["computer"]
+
+torn_key = runtime_data["torn_keys"]["Kwartz"]
+sms_account = runtime_data["sms_account"]
 
 # script execution start schedule
 now_date = datetime.now(timezone.utc)
-now_date_str = now_date.strftime("%Y/%m/%d %H:%M:%S UTC")
+now_date_str = now_date.strftime("%d/%m/%Y %H:%M:%S UTC")
 
-# get data from torn API
-company_employees = safe_get(f"https://api.torn.com/company/?selections=employees&key={torn_key}")[
-    "company_employees"]
-company_detailed = safe_get(f"https://api.torn.com/company/?selections=detailed&key={torn_key}")[
-    "company_detailed"]
-company = safe_get(f"https://api.torn.com/company/?selections=profile&key={torn_key}")["company"]
+
+# # get data from torn API v1
+# company_employees = safe_get(f"https://api.torn.com/company/?selections=employees&key={torn_key}")[
+#     "company_employees"]
+# company_detailed = safe_get(f"https://api.torn.com/company/?selections=detailed&key={torn_key}")[
+#     "company_detailed"]
+# company = safe_get(f"https://api.torn.com/company/?selections=profile&key={torn_key}")["company"]
+
+# get data from torn API v2
+company_employees = safe_get(url="https://api.torn.com/v2/company/?selections=employees",
+                             torn_key=torn_key)["company_employees"]
+company_detailed = safe_get(f"https://api.torn.com/v2/company/?selections=detailed",
+                            torn_key=torn_key)["company_detailed"]
+company = safe_get(f"https://api.torn.com/v2/company/?selections=profile",
+                            torn_key=torn_key)["company"]
+
 
 # company alerts limits
 trains_alert_limit = 10
@@ -96,9 +108,9 @@ if not good_activity:
 if all_good and good_activity:
     sms_message += "All is good\n"
 
-sms_message +=f"report by {computer}\n"
+sms_message +=f"Report by {computer}\n"
 
-sms_status = send_sms(message = sms_message, api_keys = free_keys)
+sms_status = send_sms(message = sms_message, sms_account = sms_account)
 
 if DEBUG:
     print(sms_message)

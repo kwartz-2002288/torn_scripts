@@ -10,10 +10,19 @@ def fetch_company_data(torn_key: str):
     """
     Call Torn API to fetch company employees, detailed info, and profile.
     """
-    base_url = f"https://api.torn.com/company/?key={torn_key}&selections="
-    company_employees = safe_get(base_url + "employees")["company_employees"]
-    company_detailed = safe_get(base_url + "detailed")["company_detailed"]
-    company_profile = safe_get(base_url + "profile")["company"]
+    #API v1
+    # base_url = f"https://api.torn.com/company/?key={torn_key}&selections="
+    # company_employees = safe_get(base_url + "employees")["company_employees"]
+    # company_detailed = safe_get(base_url + "detailed")["company_detailed"]
+    # company_profile = safe_get(base_url + "profile")["company"]
+
+    # get data from torn API v2
+    company_employees = safe_get(url="https://api.torn.com/v2/company/?selections=employees",
+                                 torn_key=torn_key)["company_employees"]
+    company_detailed = safe_get(f"https://api.torn.com/v2/company/?selections=detailed",
+                                torn_key=torn_key)["company_detailed"]
+    company_profile  = safe_get(f"https://api.torn.com/v2/company/?selections=profile",
+                                torn_key=torn_key)["company"]
     return company_employees, company_detailed, company_profile
 
 

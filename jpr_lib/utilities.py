@@ -78,7 +78,7 @@ def safe_get(url: str, torn_key: str = None, verbose: bool = False) -> dict:
             raise ValueError("For V2, the key must NOT be in the URL. Use torn_key parameter instead.")
 
     # Make the request
-    r = requests.get(url, headers=headers)
+    r = requests.get(url=url, headers=headers)
 
     # Check HTTP status
     if r.status_code != 200:

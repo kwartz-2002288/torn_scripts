@@ -135,7 +135,7 @@ def build_and_send_alert(
     lines.append(f"Level {level}")
     lines.append(f"Faction {faction_name}")
     lines.append(f"Territory {territory}")
-    lines.append(f"Computer {computer}")
+    lines.append(f"Report by {computer}")
     # if last_snapshot:
     #     lines.append("Last known state:")
     #     lines.append(str(last_snapshot))
