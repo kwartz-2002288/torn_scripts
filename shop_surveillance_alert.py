@@ -37,8 +37,6 @@ devices = safe_get(
                 torn_key=torn_key
                 )["shoplifting"][shop]
 
-print(devices)
-
 # Detect disabled surveillance
 disabled_devices = [d['title'] for d in devices if d['disabled']]
 

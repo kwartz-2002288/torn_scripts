@@ -34,5 +34,5 @@ jpr_env/
 
 # Requirements and crontab file
 requirements.txt
-crontab.txt
+crontab_cet.txt
 
