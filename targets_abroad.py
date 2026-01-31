@@ -4,7 +4,7 @@ from jpr_lib import load_config, safe_get
 import gspread, re
 from datetime import datetime, timezone
 
-DEBUG = True
+DEBUG = False
 
 def extract_destination(description):
     desc = description.strip()
@@ -162,7 +162,6 @@ def main():
 
     with open( data_path_abroad + "factions_abroad.json", 'r') as f:
         faction_list = json.load(f)
-        print(faction_list)
     for faction_id in faction_list:
         if DEBUG:
             print(f"Fetching data for faction {faction_id}...")
@@ -172,7 +171,6 @@ def main():
         faction_data = safe_get(url=f"https://api.torn.com/v2/faction/{faction_id}/basic", torn_key=torn_key
                             )["basic"]
         faction_name = faction_data["name"]
-        print(faction_name)
         state_path = data_path_abroad + f"abroad_state_{faction_id}.json"
 
         filtered = filter_members(members, state_path)
