@@ -73,7 +73,7 @@ def filter_members(members, state_path):
     now = datetime.now(timezone.utc).timestamp()
 
     for member in members:
-        member_id = member["id"]
+        member_id = str(member["id"])
         desc = member["status"]["description"]
         desc_lower = desc.lower()
 
