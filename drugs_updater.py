@@ -95,7 +95,7 @@ def main():
         total_od_old = int(ws.cell(1,6).value)
         total_od_new = drugs_new["overdoses"]
         overdosed = total_od_new > total_od_old
-        xan_od = 1 if overdosed and "xanax" in drugs_changed else 0
+        xan_od = 10 if overdosed and "xanax" in drugs_changed else 0
         if overdosed:
             ws.update_cell(1,6, total_od_new)
 
