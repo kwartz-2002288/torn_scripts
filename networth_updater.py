@@ -27,14 +27,31 @@ def get_company_funds(torn_key: str):
 
 def evaluate_networth_correction(networth_corrections, torn_key):
     stocks_lent = networth_corrections['stocks_lent']
-    stocks = safe_get(url='https://api.torn.com/v2/torn/stocks', torn_key=torn_key)['stocks']
+
+    stocks_raw = safe_get(
+        url='https://api.torn.com/v2/torn/stocks',
+        torn_key=torn_key
+    )['stocks']
+
+    # PATCH: convert list to dict indexed by id
+    stocks = {s["id"]: s for s in stocks_raw}
+
     stocks_lent_value = 0
+
     for lent in stocks_lent:
-        stock = stocks[lent["stock_id"]]
-        stocks_lent_value += (2**lent["increments"] - 1)*stock["current_price"]*stock["benefit"]["requirement"]
+        stock = stocks[int(lent["stock_id"])]
+
+        # PATCH: updated field names
+        stocks_lent_value += (
+            (2**lent["increments"] - 1)
+            * stock["market"]["price"]
+            * stock["bonus"]["requirement"]
+        )
+
     nub_rig_investment = parse_amount(networth_corrections['nub_rig_investment'])
     nub_tv_delta = parse_amount(networth_corrections['nub_tv_delta'])
     company_correction = nub_rig_investment + nub_tv_delta
+
     return company_correction, stocks_lent_value
 
 def main():
