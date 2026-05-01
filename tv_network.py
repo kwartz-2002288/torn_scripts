@@ -10,19 +10,19 @@ def fetch_company_data(torn_key: str):
     """
     Call Torn API to fetch company employees, detailed info, and profile.
     """
-    #API v1
-    # base_url = f"https://api.torn.com/company/?key={torn_key}&selections="
-    # company_employees = safe_get(base_url + "employees")["company_employees"]
-    # company_detailed = safe_get(base_url + "detailed")["company_detailed"]
-    # company_profile = safe_get(base_url + "profile")["company"]
+    #get data from torn API v1
+    base_url = f"https://api.torn.com/company/?key={torn_key}&selections="
+    company_employees = safe_get(base_url + "employees")["company_employees"]
+    company_detailed = safe_get(base_url + "detailed")["company_detailed"]
+    company_profile = safe_get(base_url + "profile")["company"]
 
     # get data from torn API v2
-    company_employees = safe_get(url="https://api.torn.com/v2/company/?selections=employees",
-                                 torn_key=torn_key)["company_employees"]
-    company_detailed = safe_get(f"https://api.torn.com/v2/company/?selections=detailed",
-                                torn_key=torn_key)["company_detailed"]
-    company_profile  = safe_get(f"https://api.torn.com/v2/company/?selections=profile",
-                                torn_key=torn_key)["company"]
+    # company_employees = safe_get(url="https://api.torn.com/v2/company/?selections=employees",
+    #                              torn_key=torn_key)["employees"]
+    # company_detailed = safe_get(f"https://api.torn.com/v2/company/?selections=detailed",
+    #                             torn_key=torn_key)["detailed"]
+    # company_profile  = safe_get(f"https://api.torn.com/v2/company/?selections=profile",
+    #                             torn_key=torn_key)["profile"]
     return company_employees, company_detailed, company_profile
 
 
@@ -153,7 +153,6 @@ def update_evolution_sheet(
 
     company_effectiveness_max = (company_effectiveness_total - inactivity_total - addiction_total)
     efficiency_loss = (-inactivity_total - addiction_total) / company_effectiveness_max
-
 
     ws_evo = gc.open_by_key(spreadsheet_id).worksheet('evolution')
     row = int(ws_evo.cell(1, 3).value) + 1   #  row where to write data

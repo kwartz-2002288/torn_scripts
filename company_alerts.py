@@ -17,20 +17,20 @@ now_date = datetime.now(timezone.utc)
 now_date_str = now_date.strftime("%d/%m/%Y %H:%M:%S UTC")
 
 
-# # get data from torn API v1
-# company_employees = safe_get(f"https://api.torn.com/company/?selections=employees&key={torn_key}")[
-#     "company_employees"]
-# company_detailed = safe_get(f"https://api.torn.com/company/?selections=detailed&key={torn_key}")[
-#     "company_detailed"]
-# company = safe_get(f"https://api.torn.com/company/?selections=profile&key={torn_key}")["company"]
+# get data from torn API v1
+company_employees = safe_get(f"https://api.torn.com/company/?selections=employees&key={torn_key}")[
+    "company_employees"]
+company_detailed = safe_get(f"https://api.torn.com/company/?selections=detailed&key={torn_key}")[
+    "company_detailed"]
+company = safe_get(f"https://api.torn.com/company/?selections=profile&key={torn_key}")["company"]
 
 # get data from torn API v2
-company_employees = safe_get(url="https://api.torn.com/v2/company/?selections=employees",
-                             torn_key=torn_key)["company_employees"]
-company_detailed = safe_get(f"https://api.torn.com/v2/company/?selections=detailed",
-                            torn_key=torn_key)["company_detailed"]
-company = safe_get(f"https://api.torn.com/v2/company/?selections=profile",
-                            torn_key=torn_key)["company"]
+#company_employees = safe_get(url="https://api.torn.com/v2/company/?selections=employees",
+#                             torn_key=torn_key)["company_employees"]
+#company_detailed = safe_get(f"https://api.torn.com/v2/company/?selections=detailed",
+#                            torn_key=torn_key)["company_detailed"]
+#company = safe_get(f"https://api.torn.com/v2/company/?selections=profile",
+#                            torn_key=torn_key)["company"]
 
 
 # company alerts limits
