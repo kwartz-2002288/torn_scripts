@@ -3,9 +3,18 @@ import gspread
 from gspread.utils import ValueInputOption
 from datetime import datetime, timezone
 
-def get_networth(torn_key : str):
-    networth = safe_get(url=f'https://api.torn.com/v2/user/networth', torn_key=torn_key)['networth']
-    return networth['total'],networth['stockmarket'],networth['company'],networth['vault']
+def get_networth(torn_key: str):
+    networth = safe_get(
+        url='https://api.torn.com/v2/user/networth',
+        torn_key=torn_key
+    )['networth']
+
+    return (
+        networth['total'],
+        networth['assets']['stock_market'],
+        networth['assets']['company'],
+        networth['money']['vault']
+    )
 
 def get_faction_balance(torn_key : str):
         profile = safe_get(url=f'https://api.torn.com/v2/user/basic', torn_key=torn_key)['profile']
