@@ -16,26 +16,18 @@ sms_account = runtime_data["sms_account"]
 now_date = datetime.now(timezone.utc)
 now_date_str = now_date.strftime("%d/%m/%Y %H:%M:%S UTC")
 
-# Get surveillance data from torn API v1
-# Shop names:
-# "sallys_sweet_shop","Bits_n_bobs","tc_clothing","super_store",
-# "cyber_force","pharmacy","big_als","jewelry_store"
-#
-# "jewelry_store": [
-#     {
-#         "title": "Three cameras",
-#         "disabled": false,
-#     },
-#     {
-#         "title": "One guard",
-#         "disabled": false,
-#     },
-# ]
 shop = "jewelry_store"
-devices = safe_get(
-                url="https://api.torn.com/v2/torn/shoplifting",
-                torn_key=torn_key
-                )["shoplifting"][shop]
+shop_id = 23
+
+shoplifting = safe_get(
+    url="https://api.torn.com/v2/torn/shoplifting",
+    torn_key=torn_key
+)["shoplifting"]
+
+devices = next(
+    shop for shop in shoplifting
+    if shop["id"] == shop_id
+)["status"]
 
 # Detect disabled surveillance
 disabled_devices = [d['title'] for d in devices if d['disabled']]

@@ -20,20 +20,32 @@ sms_account = runtime_data["sms_account"]
 now_date = datetime.now(timezone.utc)
 now_date_str = now_date.strftime("%d/%m/%Y %H:%M:%S UTC")
 
-# get Nikeh shop inventory
-id_Nikeh = "111"
-id_Boxing_Gloves = "330"
+# get shops inventory
 
-Nikeh_shop_inventory = safe_get(
-    f"https://api.torn.com/v2/torn/cityshops",
-    torn_key=torn_key)["cityshops"][id_Nikeh]["inventory"]
+data = safe_get(
+    "https://api.torn.com/v2/torn/cityshops",
+    torn_key=torn_key
+)
+
+# select shop and item
+shop_name = "Nikeh Performance"
+item_name = "Boxing Gloves"
+
+shop = next(
+    shop for shop in data["cityshops"]
+    if shop["name"] == shop_name
+)
+
+item = next(
+    item for item in shop["items"]
+    if item["name"] == item_name
+)
+
+n_items = item["stock"]["current"]
 
 # Prepare the message
-all_good = True
-msg_lines = ["ALERT from Nikeh Shop"]
-
-if id_Boxing_Gloves in Nikeh_shop_inventory:
-    n_items = Nikeh_shop_inventory[id_Boxing_Gloves]["in_stock"]
+if n_items > 0:
+    msg_lines = ["ALERT from Nikeh Shop"]
     msg_lines.append(f"{n_items} boxing gloves here!")
     msg_lines.append(f"Report by {computer}")
     sms_message = "\n".join(msg_lines)
@@ -43,5 +55,3 @@ if id_Boxing_Gloves in Nikeh_shop_inventory:
             "Alert SMS failed in bg_alerts| time=%s",
             now_date_str
         )
-
-
