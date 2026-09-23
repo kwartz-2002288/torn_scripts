@@ -1,8 +1,7 @@
 from datetime import datetime, timezone
 from jpr_lib import load_config, send_sms, safe_get
 
-
-DEBUG = False
+DEBUG = True
 
 # set_up
 config = load_config()
@@ -17,7 +16,8 @@ now_date = datetime.now(timezone.utc)
 now_date_str = now_date.strftime("%d/%m/%Y %H:%M:%S UTC")
 
 shop = "jewelry_store"
-shop_id = 23
+# NOTE: The shop IDs in `shoplifting` have changed and are inconsistent with those in `cityshops`.
+shop_id = 24
 
 shoplifting = safe_get(
     url="https://api.torn.com/v2/torn/shoplifting",
