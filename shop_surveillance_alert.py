@@ -1,8 +1,6 @@
 from datetime import datetime, timezone
 from jpr_lib import load_config, send_sms, safe_get
 
-DEBUG = True
-
 # set_up
 config = load_config()
 runtime_data = config["runtime_data"]
@@ -39,14 +37,12 @@ sms_message = (
 )
 # Send SMS only if all devices are disabled
 if len(disabled_devices) == len(devices):
-    sms_message += (f"SURVEILLANCE DISABLED:\n"
+    sms_message += (f"SURVEILLANCE IS DISABLED:\n"
                     f"{', '.join(disabled_devices)}\n")
     sms_message += f"Report by {computer}\n"
     sms_status = send_sms(message=sms_message, sms_account=sms_account)
-if DEBUG:
     print(sms_message)
     print(devices)
-
 
 
 
