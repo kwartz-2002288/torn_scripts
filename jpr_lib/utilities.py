@@ -2,6 +2,7 @@ import requests, json
 import math, random
 from datetime import datetime, timezone
 import logging
+from pprint import pprint
 
 logger = logging.getLogger(__name__)
 
@@ -293,15 +294,16 @@ def point_value_averaged(torn_key: str = None, n_average: int =10, verbose: bool
     data = safe_get(url=f"https://api.torn.com/v2/market/pointsmarket", torn_key=torn_key)
     points_market = data["pointsmarket"]
 #
-    costs = [entry["cost"] for entry in points_market.values()]
+
+    costs = [entry["cost"] for entry in points_market]
     min_cost = min(costs)
     if verbose:
         print("Minimum cost:", min_cost)
 
-    # Convert dict to list of tuples (id, info) and sort by "cost"
+    # Sort market entries by cost
     sorted_entries = sorted(
-        points_market.items(),
-        key=lambda item: item[1]["cost"]
+        points_market,
+        key=lambda entry: entry["cost"]
     )
 
     # Take first N entries with the lowest cost
@@ -311,7 +313,7 @@ def point_value_averaged(torn_key: str = None, n_average: int =10, verbose: bool
     if verbose:
         print(f"cost  | quantity")
     total_cost, total_quantity = 0, 0
-    for id_unused, info in top:
+    for info in top:
         cost = info["cost"]
         qty = info["quantity"]
         total_cost += qty * cost
