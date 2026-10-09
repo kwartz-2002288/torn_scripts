@@ -135,6 +135,7 @@ def plot_energy_cost_bar_chart(profile, current_date_str, item_order, costs_norm
 def main():
 
     # Load configuration
+
     config = load_config()
     runtime_data = config["runtime_data"]
     torn_keys = runtime_data["torn_keys"]
