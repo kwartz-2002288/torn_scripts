@@ -16,14 +16,27 @@ def get_networth(torn_key: str):
         networth['money']['vault']
     )
 
-def get_faction_balance(torn_key : str):
-        profile = safe_get(url=f'https://api.torn.com/v2/user/basic', torn_key=torn_key)['profile']
-        member_id = profile['id']
-        members = safe_get(url=f'https://api.torn.com/v2/faction/balance', torn_key=torn_key)['balance']['members']
-        for member in members:
-            if member.get("id") == member_id:
-                return member.get("money")
-        return None
+def get_faction_balance(member_key: str, faction_key: str):
+    # Resolve the player's Torn ID with their own key.
+    profile = safe_get(
+        url='https://api.torn.com/v2/user/basic',
+        torn_key=member_key
+    )['profile']
+    member_id = profile['id']
+
+    # Use a key belonging to a current faction member. cat=all also includes
+    # ex-members that still have money or points in the faction balance.
+    members = safe_get(
+        url='https://api.torn.com/v2/faction/balance?cat=all',
+        torn_key=faction_key
+    )['balance']['members']
+
+    for member in members:
+        if member.get("id") == member_id:
+            return member.get("money") or 0
+
+    # No balance entry means there is nothing currently held for that player.
+    return 0
 
 def get_company_funds(torn_key: str):
 #
@@ -81,8 +94,10 @@ def main():
     ws = gs_client.open_by_key(spreadsheet_id).worksheet('NW')
 
     # --- Get networth information ---
-    faction_balance_total = (get_faction_balance(torn_keys['Kivou']) +
-                             get_faction_balance(torn_keys['Kwartz']))
+    faction_balance_total = (
+        get_faction_balance(torn_keys['Kivou'], torn_keys['Kwartz'])
+        + get_faction_balance(torn_keys['Kwartz'], torn_keys['Kwartz'])
+    )
     networth_kivou, stock_kivou, company_kivou, vault_kivou = get_networth(torn_keys['Kivou'])
     networth_kwartz, stock_kwartz, company_kwartz, vault_kwartz = get_networth(torn_keys['Kwartz'])
 
