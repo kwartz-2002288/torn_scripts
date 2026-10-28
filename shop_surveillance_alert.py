@@ -9,7 +9,7 @@ computer = config["computer"]
 torn_key = runtime_data["torn_keys"]["Kwartz"]
 sms_account = runtime_data["sms_account"]
 
-# Set to True to simulate alert conditions for all monitored shops.
+# Set to True to simulate the Cluster Ring alert condition.
 TEST_MODE = False
 
 # Script execution time
@@ -19,11 +19,6 @@ now_date_str = now_date.strftime("%d/%m/%Y %H:%M:%S UTC")
 # Shops to monitor.
 # Only the listed surveillance devices need to be disabled for an alert.
 shops_to_monitor = {
-    22: {
-        "name": "Super Store",
-        "required_disabled": {"Two cameras"},
-        "items": ["Receipt", "Voice Recorder"],
-    },
     24: {
         "name": "Jewelry Store",
         "required_disabled": {"Three cameras", "One guard"},
@@ -52,19 +47,15 @@ for shop_id, alert_config in shops_to_monitor.items():
     }
 
     if TEST_MODE:
-        if shop_id == 22: #22
-            disabled_devices = {"Two cameras"}
-        elif shop_id == 24: #24
-            disabled_devices = {"Three cameras", "One guard"}
+        disabled_devices = set(alert_config["required_disabled"])
 
     if alert_config["required_disabled"].issubset(disabled_devices):
         sms_message = (
+            f"{alert_config['name']} surveillance\n"
             f"{now_date_str}\n"
-            f"{alert_config['name']}\n"
-            f"Surveillance Disabled:\n"
+            f"CONDITION IS ACTIVE:\n"
             f"{', '.join(sorted(alert_config['required_disabled']))}\n"
-            f"{'Unique' if len(alert_config['items']) == 1 else 'Uniques'}: "
-            f"{', '.join(alert_config['items'])}\n"
+            f"ITEM TO GET: {', '.join(alert_config['items'])}\n"
             f"Report by {computer}\n"
         )
 
